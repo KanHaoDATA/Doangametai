@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>KanHao Tools</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 360px;
+      width: 90%;
+      padding: 20px;
+      background: #000;
+      border: 1px solid #0f0;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #0f0;
+      text-align: center;
+    }
+    h2, h3 {
+      margin: 10px 0;
+    }
+    input, button {
+      width: 100%;
+      font-size: 16px;
+      margin-top: 10px;
+      border-radius: 8px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #0f0;
+      color: #000;
+      font-weight: bold;
+      border: none;
+    }
+    .toggle-link {
+      color: #0f0;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 16px;
+      display: inline-block;
+      font-size: 15px;
+    }
+    #registerBox {
+      display: none;
+      margin-top: 10px;
+    }
+    .result {
+      margin-top: 15px;
+      background: #222;
+      padding: 10px;
+      border: 1px solid #0f0;
+    }
+    .dice {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .die {
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, #eaffea, #c1ffc1);
+      color: #006600;
+      font-size: 32px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      box-shadow: 0 0 12px #00ff00, inset 0 0 5px #00cc00;
+    }
+    #txResult {
+      font-size: 36px;
+      font-weight: bold;
+      text-shadow: 0 0 8px #00ff00;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="authSection">
+    <h2>@KanHaoDATA</h2>
+    <h3>Đăng nhập bằng mã key</h3>
+    <input type="text" id="loginKey" placeholder="Nhập mã key được cấp">
+    <button onclick="loginByKey()">Đăng nhập</button>
+
+    <span class="toggle-link" onclick="toggleRegister()">Chưa có key? Đăng ký</span>
+
+    <div id="registerBox">
+      <input type="text" id="phoneInput" placeholder="Nhập số điện thoại">
+      <button onclick="registerPhone()">Gửi yêu cầu</button>
+    </div>
+  </div>
+
+  <div class="container" id="md5Tool" style="display:none;">
+    <h3>Soi Cầu Tài Xỉu MD5</h3>
+    <input type="text" id="md5Input" placeholder="Nhập chuỗi MD5">
+    <button onclick="analyzeMD5()">Phân Tích</button>
+    <div class="result"><div id="txResult">...</div></div>
+    <div class="dice" id="dice"></div>
+  </div>
+
+  <script>
+    let keyList = JSON.parse(localStorage.getItem('keyList') || '{}');
+    let activatedKeys = JSON.parse(localStorage.getItem('activatedKeys') || '{}');
+
+    function showMsg(msg) {
+      alert(msg);
+    }
+
+    function toggleRegister() {
+      const box = document.getElementById('registerBox');
+      box.style.display = box.style.display === "none" ? "block" : "none";
+    }
+
+    function registerPhone() {
+      const phone = document.getElementById('phoneInput').value.trim();
+      if (!/^[0-9]{8,15}$/.test(phone)) return showMsg("SĐT không hợp lệ");
+
+      if (keyList[phone]) return showMsg("SĐT đã gửi yêu cầu!");
+
+      keyList[phone] = null;
+      localStorage.setItem('keyList', JSON.stringify(keyList));
+      showMsg("Yêu cầu đã gửi. Chờ admin cấp mã key.");
+    }
+
+    function loginByKey() {
+      const key = document.getElementById('loginKey').value.trim().toUpperCase();
+      if (!key.startsWith("KEY-")) return showMsg("Mã key không hợp lệ");
+
+      if (activatedKeys[key]) {
+        localStorage.setItem('currentKey', key);
+        showTool();
+      } else {
+        showMsg("Key chưa được kích hoạt. Vui lòng liên hệ admin.");
+      }
+    }
+
+    function showTool() {
+      document.getElementById('authSection').style.display = "none";
+      document.getElementById('md5Tool').style.display = "block";
+    }
+
+    function analyzeMD5() {
+      const md5 = document.getElementById('md5Input').value.trim().toLowerCase();
+      const resultEl = document.getElementById('txResult');
+      const diceEl = document.getElementById('dice');
+
+      if (!/^[a-f0-9]{32}$/.test(md5)) {
+        resultEl.innerText = 'MD5 không hợp lệ!';
+        resultEl.style.color = '#f44';
+        diceEl.innerHTML = '';
+        return;
+      }
+
+      const nums = [
+        parseInt(md5.slice(0, 2), 16) % 6 + 1,
+        parseInt(md5.slice(2, 4), 16) % 6 + 1,
+        parseInt(md5.slice(4, 6), 16) % 6 + 1,
+      ];
+      const total = nums.reduce((a, b) => a + b, 0);
+      const result = total > 10 ? 'TÀI' : 'XỈU';
+
+      resultEl.innerText = result;
+      resultEl.style.color = result === 'TÀI' ? '#0f0' : '#ff0';
+      diceEl.innerHTML = nums.map(n => `<div class="die">${n}</div>`).join('');
+    }
+
+    const savedKey = localStorage.getItem('currentKey');
+    if (savedKey && activatedKeys[savedKey]) {
+      showTool();
+    }
+  </script>
+</body>
+</html>
