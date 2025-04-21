@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Admin Panel - Kích Hoạt Key</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #111;
+      color: #0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .admin-container {
+      text-align: center;
+      background: #000;
+      padding: 20px;
+      border: 1px solid #0f0;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #0f0;
+      max-width: 400px;
+      width: 100%;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .admin-table th, .admin-table td {
+      padding: 8px;
+      border: 1px solid #0f0;
+    }
+    .admin-table th {
+      background-color: #111;
+    }
+    button {
+      padding: 10px;
+      background: #0f0;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #008000;
+    }
+    .activate-btn {
+      background: #00f;
+    }
+    .deactivate-btn {
+      background: #f00;
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-container">
+  <h2>Admin Panel - Kích Hoạt Key</h2>
+  
+  <h3>Danh sách yêu cầu kích hoạt:</h3>
+  <table class="admin-table" id="pendingList">
+    <thead>
+      <tr>
+        <th>Số điện thoại</th>
+        <th>Trạng thái</th>
+        <th>Hành động</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Các dòng sẽ được điền động bằng JS -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // Dữ liệu giả để lưu các số điện thoại chưa kích hoạt
+  let pendingRequests = JSON.parse(localStorage.getItem('pendingRequests') || '[]');
+
+  function showMsg(msg) {
+    alert(msg);
+  }
+
+  // Hiển thị danh sách yêu cầu kích hoạt
+  function showPendingRequests() {
+    const pendingList = document.getElementById('pendingList').getElementsByTagName('tbody')[0];
+    pendingList.innerHTML = '';  // Làm sạch danh sách trước khi hiển thị mới
+
+    // Duyệt qua danh sách các số điện thoại chưa được kích hoạt
+    pendingRequests.forEach((request, index) => {
+      const row = pendingList.insertRow();
+      row.insertCell(0).textContent = request.phoneNumber;
+      row.insertCell(1).textContent = request.status ? "Đã kích hoạt" : "Chưa kích hoạt";
+      
+      const actionCell = row.insertCell(2);
+      if (!request.status) {
+        actionCell.innerHTML = `<button class="activate-btn" onclick="activateKey(${index})">Kích hoạt</button>`;
+      } else {
+        actionCell.innerHTML = `<button class="deactivate-btn" onclick="deactivateKey(${index})">Hủy kích hoạt</button>`;
+      }
+    });
+  }
+
+  // Kích hoạt key cho người dùng
+  function activateKey(index) {
+    pendingRequests[index].status = true;  // Thay đổi trạng thái
+    localStorage.setItem('pendingRequests', JSON.stringify(pendingRequests));  // Lưu lại vào localStorage
+    showPendingRequests();  // Cập nhật lại danh sách
+    showMsg("Đã kích hoạt key cho số điện thoại " + pendingRequests[index].phoneNumber);
+  }
+
+  // Hủy kích hoạt key
+  function deactivateKey(index) {
+    pendingRequests[index].status = false;  // Thay đổi trạng thái
+    localStorage.setItem('pendingRequests', JSON.stringify(pendingRequests));  // Lưu lại vào localStorage
+    showPendingRequests();  // Cập nhật lại danh sách
+    showMsg("Đã hủy kích hoạt key cho số điện thoại " + pendingRequests[index].phoneNumber);
+  }
+
+  // Giả lập yêu cầu đăng ký để kiểm tra
+  // Trong thực tế, người dùng sẽ gửi yêu cầu thông qua hệ thống và sẽ được lưu vào localStorage
+  function addTestRequests() {
+    pendingRequests.push({ phoneNumber: '0912345678', status: false });
+    pendingRequests.push({ phoneNumber: '0987654321', status: false });
+    localStorage.setItem('pendingRequests', JSON.stringify(pendingRequests));
+    showPendingRequests();
+  }
+
+  // Gọi hàm này để thêm các yêu cầu đăng ký giả khi cần thiết
+  // addTestRequests(); // Bỏ dấu chú thích để chạy thử
+  showPendingRequests(); // Hiển thị ngay khi tải trang
+</script>
+
+</body>
+</html>
